@@ -1,0 +1,14 @@
+models:
+    scillm:
+        model_name: SciLLM 
+        agent_name: DeepSpeedAgent
+        dataset: PretrainDataset
+
+# ========= Global configuration ========== #
+logging_step: 5
+eval_interval: 0.05
+max_dataset_cache_size: 100000
+max_seq_length: 2048
+warmup_steps: 2000
+seed: 0
+# ========= Global configuration ========== #

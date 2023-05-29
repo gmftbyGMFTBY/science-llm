@@ -1,0 +1,12 @@
+*.json
+*.jsonl
+*.csv
+*.pt
+*.txt
+**/__pycache__
+*.tar.gz
+*.gz
+*.zip
+rest/
+ckpt/
+log/
