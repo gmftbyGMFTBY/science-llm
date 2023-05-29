@@ -10,3 +10,5 @@
 rest/
 ckpt/
 log/
+
+!data/redpajama_test_tokens.json
