@@ -12,6 +12,16 @@
 ./scripts/train_pretrain.sh
 ```
 
+### 2023/06/02版本bugs：
+* int4 多卡训练 tensor 所在设备不匹配
+* flash attention 的适配未经验证
+* **NOTE**: transformers/peft/accelerate 库均需 clone github 最新 repo 后安装
+    ```commandline
+    pip install -q -U git+https://github.com/huggingface/transformers.git
+    pip install -q -U git+https://github.com/huggingface/peft.git
+    pip install -q -U git+https://github.com/huggingface/accelerate.git
+    ```
+
 ## Demo 展示页准备
 
 可以参考一些现有的visual-language model的项目，比如[PandaGPT](https://panda-gpt.github.io/), [MiniGPT-4](https://minigpt-4.github.io/), [LLaVa](https://llava-vl.github.io/)

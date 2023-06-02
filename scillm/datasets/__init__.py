@@ -5,6 +5,7 @@ from .pretrain_dataset import *
 
 def load_dataset(args):
     tokenizer = LlamaTokenizer.from_pretrained(args['model_path'])
+    tokenizer.pad_token_id = tokenizer.eos_token_id
     dataset_name = args['models'][args['model']]['dataset']
     args['tokenizer'] = tokenizer
     data = globals()[dataset_name](**args)

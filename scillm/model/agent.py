@@ -1,3 +1,4 @@
+import torch.optim
 from header import *
 
 class DeepSpeedAgent:
@@ -30,13 +31,23 @@ class DeepSpeedAgent:
             sum_writer.add_scalar(f'train/RunningLoss', loss.item(), current_step)
             sum_writer.add_scalar(f'train/TokenAcc', mle_acc*100, current_step)
 
-        if self.args['local_rank'] == 0 and current_step in self.args['eval_and_save_steps']:
-            ppl = self.calculate_ppl(test_iter)
+        # if self.args['local_rank'] == 0 and current_step in self.args['eval_and_save_steps']:
+        #     ppl = self.calculate_ppl(test_iter)
+        #     # save the model
+        #     self.save_model(self.args['save_path'], self.args['save_counter'])
+        #     self.args['save_counter'] += 1
+        #     if sum_writer:
+        #         sum_writer.add_scalar('eval/perplexity', ppl, self.args['save_counter'])
+        if current_step in self.args['eval_and_save_steps']:
             # save the model
-            self.save_model(args['save_path'], args['save_counter'])
-            self.args['save_counter'] += 1
-            if sum_writer:
-                sum_writer.add_scalar('eval/perplexity', ppl, self.args['save_counter'])
+            self.ds_engine.module.eval()
+            # TODO: solve the barrier issue in perplexity calculation
+            # ppl = self.calculate_ppl(test_iter)
+            self.save_model(self.args['save_path'], self.args['save_counter'])
+            if self.args['local_rank'] == 0:
+                self.args['save_counter'] += 1
+                # if sum_writer:
+                #     sum_writer.add_scalar('eval/perplexity', ppl, self.args['save_counter'])
         torch.distributed.barrier()
 
     @torch.no_grad()
@@ -44,9 +55,11 @@ class DeepSpeedAgent:
         self.ds_engine.module.eval()
         losses = []
         for batch in tqdm(test_iter):
-            loss = self.ds_engine.module.calculate_ppl(batch)
-            losses.extend(loss)
-        ppl = np.exp(np.mean(loss))
+            # loss = self.ds_engine.module.calculate_ppl(batch)
+            loss, _ = self.ds_engine(batch)
+            losses.extend([loss.cpu()])
+        ppl = np.exp(np.mean(losses))
+        torch.distributed.barrier()
         return ppl
     
     def save_model(self, path, current_step):

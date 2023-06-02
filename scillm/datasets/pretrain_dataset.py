@@ -44,6 +44,7 @@ class PretrainDataset(Dataset):
     def __getitem__(self, i) -> Dict[str, torch.Tensor]:
         if len(self.cache_tokens) < self.args['max_seq_length']:
             self.cache = list(islice(self.cache_f_reader, self.current_num, self.current_num + self.args['max_dataset_cache_size']))
+            self.cache = [json.loads(single_data) for single_data in self.cache]
             self.current_num += self.args['max_dataset_cache_size']
             random.shuffle(self.cache)
             # concatentate
