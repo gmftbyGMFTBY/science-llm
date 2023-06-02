@@ -12,3 +12,4 @@ ckpt/
 log/
 
 !data/redpajama_test_tokens.json
+!scillm/dsconfig/scillm.json

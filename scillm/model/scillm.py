@@ -1,6 +1,6 @@
 from header import *
 from .utils import *
-from .llama_flash_attn_monkey_patch import replace_llama_attn_with_flash_attn
+# from .llama_flash_attn_monkey_patch import replace_llama_attn_with_flash_attn
 
 class SciLLM(nn.Module):
 
@@ -10,9 +10,8 @@ class SciLLM(nn.Module):
 
         # TODO: replace_llama_attn_with_flash_attn()
         # model loading
-        self.model = AutoModelForCausalLM.from_pretrained(
+        self.model = LlamaForCausalLM.from_pretrained(
             pretrained_model_name_or_path=args['model_path'],
-            device_map='auto',
             load_in_4bit=True,
             max_memory={i: '24576MB' for i in range(torch.cuda.device_count())},
             torch_dtype=torch.bfloat16,
