@@ -59,7 +59,7 @@ def main(**args):
     args['save_counter'] = 0
 
     # load train split
-    args['data_path'] = args['train_data_path']
+    args['data_path'] = os.path.join(args["train_data_path"], f'split_0{args["local_rank"]}')
     train_data, train_iter, sampler = load_dataset(args)
     # load test split
     args['data_path'] = args['test_data_path']

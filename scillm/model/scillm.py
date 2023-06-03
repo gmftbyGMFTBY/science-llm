@@ -33,22 +33,22 @@ class SciLLM(nn.Module):
             r=self.args['lora_r'], 
             lora_alpha=self.args['lora_alpha'], 
             lora_dropout=self.args['lora_dropout'],
-            target_modules=['q_proj', 'k_proj', 'v_proj', 'o_proj']
+            target_modules=['q_proj', 'k_proj', 'v_proj', 'o_proj', 'gate_proj', 'down_proj', 'up_proj']
         )
 
         self.model = get_peft_model(self.model, peft_config)
         self.model.print_trainable_parameters()
-        self.ppl_criterion = nn.CrossEntropyLoss(reduce='none')
+        self.ppl_criterion = nn.CrossEntropyLoss(reduction='none')
 
     @torch.no_grad()
     def calculate_ppl(self, inputs):
         outputs = self.model(
             input_ids=inputs['input_ids'].cuda(),
             attention_mask=inputs['attention_mask'].cuda(),
-            labels=inputs['labels'].cuda()
         )
-        loss = outputs.loss.tolist()
-        return loss
+        logits = outputs.logits[:, :-1, :]
+        loss = self.ppl_criterion(logits.reshape(-1, logits.size(-1)), inputs['labels'].cuda()[:, 1:].reshape(-1))
+        return loss.tolist()
 
     def forward(self, inputs):
         outputs = self.model(

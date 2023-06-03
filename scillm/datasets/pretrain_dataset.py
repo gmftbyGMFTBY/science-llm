@@ -31,19 +31,24 @@ class PretrainDataset(Dataset):
         self.args = args
         self.tokenizer = args['tokenizer'] 
         # cached dataset
-        self.cache_f_reader = open(args['data_path'])
+        self.cache_f_reader = open(self.args['data_path'])
         self.cache = []
         self.cache_tokens = []
         self.current_num = 0
         self.instance_num = iter_count(args['data_path'])
-        print(f'[!] collect {self.instance_num} samples for training')
+        print(f'[!] collect {self.instance_num} samples from {args["data_path"]}')
 
     def __len__(self):
         return self.instance_num
 
     def __getitem__(self, i) -> Dict[str, torch.Tensor]:
         if len(self.cache_tokens) < self.args['max_seq_length']:
-            self.cache = list(islice(self.cache_f_reader, self.current_num, self.current_num + self.args['max_dataset_cache_size']))
+            try:
+                self.cache = list(islice(self.cache_f_reader, self.current_num, self.current_num + self.args['max_dataset_cache_size']))
+            except:
+                print(f'[!] read out of the file, reload ...')
+                self.cache_f_reader = open(self.args['data_path'])
+                self.cache = list(islice(self.cache_f_reader, self.current_num, self.current_num + self.args['max_dataset_cache_size']))
             self.cache = [json.loads(single_data) for single_data in self.cache]
             self.current_num += self.args['max_dataset_cache_size']
             random.shuffle(self.cache)

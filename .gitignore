@@ -10,6 +10,7 @@
 rest/
 ckpt/
 log/
+split_*
 
 !data/redpajama_test_tokens.json
 !scillm/dsconfig/scillm.json
