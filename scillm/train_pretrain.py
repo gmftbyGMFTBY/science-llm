@@ -63,10 +63,12 @@ def main(**args):
     train_data, train_iter, sampler = load_dataset(args)
     # load test split
     args['data_path'] = args['test_data_path']
+    args['mode'] = 'test'
     _, test_iter, _ = load_dataset(args)
+    args['mode'] = 'train'
 
-    length = len(train_data) // args['world_size'] // dschf.config['train_micro_batch_size_per_gpu']
-    total_steps = len(train_data) // dschf.config['train_batch_size']
+    length = args['epoch'] * len(train_data) // args['world_size'] // dschf.config['train_micro_batch_size_per_gpu']
+    total_steps = args['epoch'] * len(train_data) // dschf.config['train_batch_size']
     args['total_steps'] = total_steps
     agent = load_model(args)
     torch.distributed.barrier()
@@ -79,19 +81,23 @@ def main(**args):
 
     # set the evaluation step
     args['eval_and_save_steps'] = set([int(length * i) for i in np.arange(0, 1, args['eval_interval'])][1:])
+    args['eval_and_save_steps'] = set([100])
+    print(f'[!] evaluate step: {args["eval_and_save_steps"]}')
 
     # begin to train
     pbar = tqdm(total=length)    # maximum total number
     current_step = 0
-    for batch in train_iter:
-        agent.train_model(
-            batch, 
-            current_step=current_step, 
-            pbar=pbar,
-            test_iter=test_iter,
-            sum_writer=sum_writer
-        )
-        current_step += 1
+    for epoch_i in range(args['epoch']):
+        for batch in train_iter:
+            agent.train_model(
+                batch, 
+                current_step=current_step, 
+                pbar=pbar,
+                test_iter=test_iter,
+                sum_writer=sum_writer
+            )
+            current_step += 1
+        agent.save_model(agent.args['save_path'], epoch_i)
 
 if __name__ == "__main__":
     args = parser_args()

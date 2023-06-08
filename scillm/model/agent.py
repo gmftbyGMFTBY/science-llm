@@ -10,7 +10,8 @@ class DeepSpeedAgent:
         # load config parameters of deepspeed
         ds_params = json.load(open(self.args['ds_config_path']))
         ds_params['scheduler']['params']['total_num_steps'] = self.args['total_steps']
-        ds_params['scheduler']['params']['warmup_num_steps'] = self.args['warmup_steps']
+        ds_params['scheduler']['params']['warmup_num_steps'] = int(self.args['warmup_ratio'] * self.args['total_steps'])
+        print(f'[!] total optimization spte: {self.args["total_steps"]}; warmup steps: {ds_params["scheduler"]["params"]["warmup_num_steps"]}')
         self.ds_engine, self.optimizer, _ , _ = deepspeed.initialize(
             model=self.model, 
             model_parameters=self.model.parameters(),
@@ -31,18 +32,15 @@ class DeepSpeedAgent:
             sum_writer.add_scalar(f'train/RunningLoss', loss.item(), current_step)
             sum_writer.add_scalar(f'train/TokenAcc', mle_acc*100, current_step)
 
-        if current_step in self.args['eval_and_save_steps']:
-            # save the model
-            self.ds_engine.module.eval()
-            # TODO: solve the barrier issue in perplexity calculation
-            ppl = self.calculate_ppl(test_iter)
-            if self.args['local_rank'] == 0:
-                self.save_model(self.args['save_path'], self.args['save_counter'])
-                self.args['save_counter'] += 1
-                if sum_writer:
-                    sum_writer.add_scalar('eval/perplexity', ppl, self.args['save_counter'])
-                    print(f'[!] perplexity: {ppl}')
-        torch.distributed.barrier()
+        # if current_step in self.args['eval_and_save_steps']:
+        #     self.ds_engine.module.eval()
+        #     self.save_model(self.args['save_path'], self.args['save_counter'])
+        #     ppl = self.calculate_ppl(test_iter)
+        #     print(f'[!] perplexity: {ppl}')
+        #     if sum_writer:
+        #         self.args['save_counter'] += 1
+        #         sum_writer.add_scalar('eval/perplexity', ppl, self.args['save_counter'])
+        # torch.distributed.barrier()
 
     @torch.no_grad()
     def calculate_ppl(self, test_iter):
@@ -58,19 +56,6 @@ class DeepSpeedAgent:
     def save_model(self, path, current_step):
         # only save trainable model parameters
         self.ds_engine.save_checkpoint(path, current_step)
-        '''
-        param_grad_dic = {
-            k: v.requires_grad for (k, v) in self.ds_engine.module.named_parameters()
-        }
-        state_dict = self.ds_engine.module.state_dict()
-        checkpoint = OrderedDict()
-        for k, v in self.ds_engine.module.named_parameters():
-            if v.requires_grad:
-                checkpoint[k] = v
-        save_path = os.path.join(path, 'pytorch_model.pt')
-        torch.save(checkpoint, save_path)
-        print(f'[!] save model into {save_path}')
-        '''
 
     def load_model(self, path):
         self.ds_engine.module.load_state_dict(torch.load(path))

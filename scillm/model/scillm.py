@@ -24,7 +24,7 @@ class SciLLM(nn.Module):
         )
 
         # peft preparation
-        self.model.gradient_checkpointing_enable()
+        # self.model.gradient_checkpointing_enable()
         self.model = prepare_model_for_kbit_training(self.model)
 
         peft_config = LoraConfig(
@@ -57,6 +57,7 @@ class SciLLM(nn.Module):
             labels=inputs['labels'].to(f"cuda:{self.args['local_rank']}")
         )
         loss = outputs.loss
+        # trigger = list(self.model.base_model.model.model.layers[0].named_parameters())
         
         # monitor token accuracy
         logits = outputs.logits[:, :-1, :]
