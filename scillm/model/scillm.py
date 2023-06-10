@@ -29,7 +29,7 @@ class SciLLM(nn.Module):
 
         peft_config = LoraConfig(
             task_type=TaskType.CAUSAL_LM, 
-            inference_mode=False, 
+            inference_mode=False,
             r=self.args['lora_r'], 
             lora_alpha=self.args['lora_alpha'], 
             lora_dropout=self.args['lora_dropout'],
@@ -39,6 +39,29 @@ class SciLLM(nn.Module):
         self.model = get_peft_model(self.model, peft_config)
         self.model.print_trainable_parameters()
         self.ppl_criterion = nn.CrossEntropyLoss(reduction='none')
+        '''
+            self.model = LlamaForCausalLM.from_pretrained(
+                pretrained_model_name_or_path=args['model_path'],
+                load_in_4bit=True,
+                max_memory={i: '24576MB' for i in range(torch.cuda.device_count())},
+                torch_dtype=torch.bfloat16,
+                quantization_config=BitsAndBytesConfig(
+                    load_in_4bit=True,
+                    bnb_4bit_compute_dtype=torch.bfloat16,
+                    bnb_4bit_use_double_quant=True,
+                    bnb_4bit_quant_type='nf4'
+                )
+            )
+            peft_config = LoraConfig(
+                task_type=TaskType.CAUSAL_LM, 
+                inference_mode=True,
+                r=self.args['lora_r'], 
+                lora_alpha=self.args['lora_alpha'], 
+                lora_dropout=self.args['lora_dropout'],
+                target_modules=['q_proj', 'k_proj', 'v_proj', 'o_proj', 'gate_proj', 'down_proj', 'up_proj']
+            )
+            self.model = get_peft_model(self.model, peft_config)
+            '''
 
     @torch.no_grad()
     def calculate_ppl(self, inputs):

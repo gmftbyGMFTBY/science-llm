@@ -1,6 +1,7 @@
 import copy
 import linecache
 from itertools import chain,islice
+from copy import deepcopy
 import os
 import json
 from tqdm import tqdm
@@ -32,33 +33,31 @@ class PretrainDataset(Dataset):
         self.tokenizer = args['tokenizer'] 
         # cached dataset
         self.cache_f_reader = open(self.args['data_path'])
-        self.cache = []
         self.cache_tokens = []
-        self.current_num = 0
         self.instance_num = iter_count(args['data_path'])
         print(f'[!] collect {self.instance_num} samples from {args["data_path"]}')
 
     def __len__(self):
-        return self.instance_num
+        # useless thing
+        return 64
 
     def __getitem__(self, i) -> Dict[str, torch.Tensor]:
         if len(self.cache_tokens) < self.args['max_seq_length']:
-            self.cache = list(islice(self.cache_f_reader, self.current_num, self.current_num + self.args['max_dataset_cache_size']))
-            if len(self.cache) == 0:
-                print(f'[!] read out of the file, reload ...')
-                self.cache_f_reader = open(self.args['data_path'])
-                self.current_num = 0
-                self.cache = list(islice(self.cache_f_reader, self.current_num, self.current_num + self.args['max_dataset_cache_size']))
-            self.cache = [json.loads(single_data) for single_data in self.cache]
-            self.current_num += len(self.cache)
-            random.shuffle(self.cache)
+            cache = []
+            for _ in range(self.args['max_dataset_cache_size']):
+                line = self.cache_f_reader.readline().strip()
+                if line:
+                    cache.append(json.loads(line))
+                else:
+                    print(f'[!] read out of the file, reload ...')
+                    self.cache_f_reader = open(self.args['data_path'])
+            random.shuffle(cache)
             # concatentate
             self.cache_tokens = []
-            for item in self.cache:
+            for item in cache:
                 self.cache_tokens += item['tokens'] + [self.tokenizer.eos_token_id]
-        tokens = self.cache_tokens[:self.args['max_seq_length']]
+        tokens = deepcopy(self.cache_tokens[:self.args['max_seq_length']])
         del self.cache_tokens[:self.args['max_seq_length']]
-        # read a cache of the training instance
         return torch.LongTensor(tokens)
 
     def collate(self, instances):
@@ -109,3 +108,12 @@ class PretrainTestDataset(Dataset):
             labels=labels,
             attention_mask=input_ids.ne(self.tokenizer.pad_token_id),
         )
+
+if __name__ == "__main__":
+    from transformers import LlamaTokenizer
+    from tqdm import tqdm
+    args = {'max_seq_length': 4096, 'tokenizer': LlamaTokenizer.from_pretrained('decapoda-research/llama-7b-hf'), 'max_dataset_cache_size': 100, 'data_path': '../data/pretrain/train/split_00'}
+    dataset = PretrainDataset(**args)
+    for i in tqdm(range(50000)):
+        dataset[i]
+

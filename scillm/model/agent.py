@@ -19,6 +19,7 @@ class DeepSpeedAgent:
             dist_init_required=True,
             args=types.SimpleNamespace(**args)
         )
+        self.trained_token_num = 0
 
     def train_model(self, batch, current_step=0, pbar=None, test_iter=None, sum_writer=None):
         self.ds_engine.module.train()
@@ -29,12 +30,14 @@ class DeepSpeedAgent:
         pbar.set_description(f'[!] loss: {round(loss.item(), 4)}; token_acc: {round(mle_acc*100, 2)}')
         pbar.update(1)
         if sum_writer:
-            sum_writer.add_scalar(f'train/RunningLoss', loss.item(), current_step)
-            sum_writer.add_scalar(f'train/TokenAcc', mle_acc*100, current_step)
+            self.trained_token_num += self.args['world_size'] * len(batch['input_ids'].reshape(-1))
+            sum_writer.add_scalar(f'train/RunningLoss', loss.item(), self.trained_token_num)
+            sum_writer.add_scalar(f'train/TokenAcc', mle_acc*100, self.trained_token_num)
 
-        # if current_step in self.args['eval_and_save_steps']:
-        #     self.ds_engine.module.eval()
-        #     self.save_model(self.args['save_path'], self.args['save_counter'])
+        if current_step in self.args['eval_and_save_steps']:
+            self.ds_engine.module.eval()
+            self.save_model(self.args['save_path'], self.args['save_counter'])
+            self.args['save_counter'] += 1
         #     ppl = self.calculate_ppl(test_iter)
         #     print(f'[!] perplexity: {ppl}')
         #     if sum_writer:
@@ -55,7 +58,8 @@ class DeepSpeedAgent:
     
     def save_model(self, path, current_step):
         # only save trainable model parameters
-        self.ds_engine.save_checkpoint(path, current_step)
+        # self.ds_engine.save_checkpoint(path, current_step)
+        self.ds_engine.module.model.save_pretrained(f'{path}_{current_step}')
 
     def load_model(self, path):
         self.ds_engine.module.load_state_dict(torch.load(path))

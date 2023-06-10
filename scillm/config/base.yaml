@@ -7,10 +7,11 @@ models:
 
 # ========= Global configuration ========== #
 logging_step: 5
-eval_interval: 0.1
+eval_interval: 0.05
 max_dataset_cache_size: 100
 max_seq_length: 4096
 warmup_ratio: 0.05
+total_step: 10000
 seed: 0
 epoch: 2
 # ========= Global configuration ========== #

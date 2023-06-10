@@ -13,22 +13,21 @@ def load_dataset(args):
     args['tokenizer'] = tokenizer
     data = globals()[dataset_name](**args)
 
-    sampler = torch.utils.data.RandomSampler(data)
-    world_size = torch.distributed.get_world_size()
-    rank = torch.distributed.get_rank()
-    batch_size = args['world_size'] * args['dschf'].config['train_micro_batch_size_per_gpu']
-    batch_sampler = DistributedBatchSampler(
-        sampler, 
-        batch_size,
-        True,
-        rank,
-        world_size
-    )
+    sampler = torch.utils.data.DistributedSampler(data)
+    # world_size = torch.distributed.get_world_size()
+    # rank = torch.distributed.get_rank()
+    # batch_size = args['world_size'] * args['dschf'].config['train_micro_batch_size_per_gpu']
+    # batch_sampler = DistributedBatchSampler(
+    #     sampler, 
+    #     batch_size,
+    #     True,
+    #     rank,
+    #     world_size
+    # )
     iter_ = DataLoader(
         data, 
-        batch_sampler=batch_sampler, 
-        num_workers=1,
+        batch_size=args['dschf'].config['train_micro_batch_size_per_gpu'],
         collate_fn=data.collate, 
-        pin_memory=True
+        sampler=sampler
     )
     return data, iter_, sampler
