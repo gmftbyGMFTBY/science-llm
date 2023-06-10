@@ -1,16 +1,42 @@
 from header import *
+from config import *
 from model import *
-
+from datasets import *
 
 def parser_args():
     parser = argparse.ArgumentParser(description='train parameters')
+    parser.add_argument('--model', default='decapoda-research/llama-7b-hf', type=str)
     parser.add_argument('--model_path', default='decapoda-research/llama-7b-hf', type=str)
+    parser.add_argument('--data_path', default='decapoda-research/llama-7b-hf', type=str)
     parser.add_argument('--delta_model_path', default='ckpt/scillm/pytorch_model.bin', type=str)
-    parser.add_argument('--max_length', default=4096, type=int)
-    parser.add_argument('--generate_len', default=512, type=int)
-    parser.add_argument('--top_k', default=50, type=int)
-    parser.add_argument('--top_p', default=0.92, type=float)
     return parser.parse_args()
+
+def main_original(args):
+    model = LlamaForCausalLM.from_pretrained(
+        pretrained_model_name_or_path=args['model_path'],
+        load_in_4bit=True,
+        max_memory={i: '24576MB' for i in range(torch.cuda.device_count())},
+        torch_dtype=torch.bfloat16,
+        quantization_config=BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_compute_dtype=torch.bfloat16,
+            bnb_4bit_use_double_quant=True,
+            bnb_4bit_quant_type='nf4'
+        )
+    )
+    tokenizer = LlamaTokenizer.from_pretrained(args['model_path'])
+    print(f'[!] load model and tokenizer over')
+    
+    # load test dataset
+    args['mode'] = 'test'
+    args.update(load_config(args))
+    _, test_iter, _ = load_dataset(args)
+    losses = []
+    for batch in tqdm(test_iter):
+        loss = model.calculate_ppl(batch)
+        losses.extend(loss)
+    ppl = np.exp(np.mean(losses))
+    print(f'[!] ppl: {round(ppl, 4)}')
 
 def main(args):
     args.update({
@@ -44,26 +70,17 @@ def main(args):
     model = PeftModel.from_pretrained(model, args['delta_model_path'])
     tokenizer = LlamaTokenizer.from_pretrained(args['model_path'])
     print(f'[!] load model and tokenizer over')
-
-    while True:
-        instruction = input('[!] Input Context: ')
-        tokens = tokenizer.encode(instruction, add_special_tokens=False)
-        tokens = torch.LongTensor(tokens[-args['max_length']+args['generate_len']:]).unsqueeze(0).cuda()
-
-        length = len(tokens[0])
-        with torch.no_grad():
-            rest = model.model.generate(
-                input_ids=tokens, 
-                max_length=length+args['generate_len'], 
-                use_cache=True, 
-                do_sample=True, 
-                top_p=args['top_p'], 
-                top_k=args['top_k']
-            )
-        output = rest[0][length:]
-        string = tokenizer.decode(output, skip_special_tokens=False)
-        print(f'[!] Generation: {string}\n')
+    
+    # load test dataset
+    args['mode'] = 'test'
+    _, test_iter, _ = load_dataset(args)
+    losses = []
+    for batch in tqdm(test_iter):
+        loss = model.calculate_ppl(batch)
+        losses.extend(loss)
+    ppl = np.exp(np.mean(losses))
+    print(f'[!] ppl: {round(ppl, 4)}')
 
 if __name__ == "__main__":
     args = vars(parser_args())
-    main(args)
+    main_original(args)

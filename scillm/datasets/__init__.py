@@ -12,18 +12,10 @@ def load_dataset(args):
         dataset_name = args['models'][args['model']]['dataset']
     args['tokenizer'] = tokenizer
     data = globals()[dataset_name](**args)
-
-    sampler = torch.utils.data.DistributedSampler(data)
-    # world_size = torch.distributed.get_world_size()
-    # rank = torch.distributed.get_rank()
-    # batch_size = args['world_size'] * args['dschf'].config['train_micro_batch_size_per_gpu']
-    # batch_sampler = DistributedBatchSampler(
-    #     sampler, 
-    #     batch_size,
-    #     True,
-    #     rank,
-    #     world_size
-    # )
+    if args['mode'] == 'test':
+        sampler = torch.utils.data.SequentialSampler(data)
+    else:
+        sampler = torch.utils.data.DistributedSampler(data)
     iter_ = DataLoader(
         data, 
         batch_size=args['dschf'].config['train_micro_batch_size_per_gpu'],
