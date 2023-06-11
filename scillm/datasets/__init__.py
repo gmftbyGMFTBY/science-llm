@@ -14,11 +14,13 @@ def load_dataset(args):
     data = globals()[dataset_name](**args)
     if args['mode'] == 'test':
         sampler = torch.utils.data.SequentialSampler(data)
+        batch_size = 1
     else:
         sampler = torch.utils.data.DistributedSampler(data)
+        batch_size = args['dschf'].config['train_micro_batch_size_per_gpu'],
     iter_ = DataLoader(
         data, 
-        batch_size=args['dschf'].config['train_micro_batch_size_per_gpu'],
+        batch_size=batch_size,
         collate_fn=data.collate, 
         sampler=sampler
     )

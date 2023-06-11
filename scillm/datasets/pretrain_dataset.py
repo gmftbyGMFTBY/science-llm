@@ -86,7 +86,7 @@ class PretrainTestDataset(Dataset):
         self.cache_tokens = []
         for item in self.cache:
             self.cache_tokens += item['tokens'] + [self.tokenizer.eos_token_id]
-        self.tokens = [self.cache_tokens[i:i+self.args['max_seq_length']]for i in range(0, len(self.cache_tokens), self.args['max_seq_length'])]
+        self.tokens = [self.cache_tokens[i:i+self.args['test_max_seq_length']]for i in range(0, len(self.cache_tokens), self.args['test_max_seq_length'])]
         self.tokens = self.tokens[:100]
         print(f'[!] load {len(self.tokens)} samples for testing')
 
