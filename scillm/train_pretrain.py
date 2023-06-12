@@ -63,8 +63,6 @@ def main(**args):
     train_data, train_iter, sampler = load_dataset(args)
     # load test split
     args['data_path'] = args['test_data_path']
-    args['mode'] = 'test'
-    _, test_iter, _ = load_dataset(args)
     args['mode'] = 'train'
 
     length = args['total_step']
@@ -80,7 +78,6 @@ def main(**args):
 
     # set the evaluation step
     args['eval_and_save_steps'] = set([int(length * i) for i in np.arange(0, 1, args['eval_interval'])][1:])
-    args['eval_and_save_steps'] = set([10])
     print(f'[!] evaluate step: {args["eval_and_save_steps"]}')
 
     # begin to train
@@ -93,11 +90,10 @@ def main(**args):
                 batch,
                 current_step=current_step,
                 pbar=pbar,
-                test_iter=test_iter,
                 sum_writer=sum_writer
             )
             current_step += 1
-        if current_step >= length:
+        if current_step > length:
             break
 
 if __name__ == "__main__":

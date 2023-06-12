@@ -12,7 +12,8 @@ max_dataset_cache_size: 100
 max_seq_length: 4096
 test_max_seq_length: 512
 warmup_ratio: 0.05
-total_step: 10000
+# 4 billion tokens need 122070 steps (each step optimize a batch with 64 batch size, and each instance has 4096 tokens)
+total_step: 122070 
 seed: 0
 epoch: 2
 # ========= Global configuration ========== #

@@ -17,7 +17,7 @@ def load_dataset(args):
         batch_size = 1
     else:
         sampler = torch.utils.data.DistributedSampler(data)
-        batch_size = args['dschf'].config['train_micro_batch_size_per_gpu'],
+        batch_size = args['dschf'].config['train_micro_batch_size_per_gpu']
     iter_ = DataLoader(
         data, 
         batch_size=batch_size,

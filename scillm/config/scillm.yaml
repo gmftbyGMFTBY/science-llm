@@ -9,6 +9,6 @@ decoding_method: sampling
 generate_len: 512
 
 # lora hyper-parameters
-lora_r: 8
-lora_alpha: 32
-lora_dropout: 0.05
+lora_r: 64
+lora_alpha: 16.0
+lora_dropout: 0.1

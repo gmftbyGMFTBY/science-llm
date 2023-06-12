@@ -77,8 +77,13 @@ def main(args):
         target_modules=['q_proj', 'k_proj', 'v_proj', 'o_proj', 'gate_proj', 'down_proj', 'up_proj']
     )
 
+    # model = get_peft_model(model, peft_config)
+    # delta_weight = torch.load(os.path.join(args['delta_model_path'], 'adapter_model.bin'))
+    # ipdb.set_trace()
+    # model.load_state_dict(delta_weight, strict=False)
+
     model = PeftModel.from_pretrained(model, args['delta_model_path'])
-    model = model.merge_and_unload()
+    # model = model.merge_and_unload()
     tokenizer = LlamaTokenizer.from_pretrained(args['model_path'])
     ppl_criterion = nn.CrossEntropyLoss(reduction='none')
     print(f'[!] load model and tokenizer over')
@@ -101,4 +106,5 @@ def main(args):
 
 if __name__ == "__main__":
     args = vars(parser_args())
-    main_original(args)
+    # main_original(args)
+    main(args)
