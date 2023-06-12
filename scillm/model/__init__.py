@@ -1,5 +1,6 @@
 from .agent import DeepSpeedAgent
 from .scillm import *
+from .scillm_sft import *
 
 def load_model(args):
     agent_name = args['models'][args['model']]['agent_name']

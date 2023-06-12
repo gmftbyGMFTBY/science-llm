@@ -1,15 +1,12 @@
 from header import *
 from .utils import *
-# from .llama_flash_attn_monkey_patch import replace_llama_attn_with_flash_attn
 
-class SciLLM(nn.Module):
+class SciSFTLLM(nn.Module):
 
     def __init__(self, **args):
-        super(SciLLM, self).__init__()
+        super(SciSFTLLM, self).__init__()
         self.args = args
 
-        # TODO: replace_llama_attn_with_flash_attn()
-        # model loading
         self.model = LlamaForCausalLM.from_pretrained(
             pretrained_model_name_or_path=args['model_path'],
             load_in_4bit=True,
@@ -23,10 +20,7 @@ class SciLLM(nn.Module):
             )
         )
 
-        # peft preparation
-        # self.model.gradient_checkpointing_enable()
         self.model = prepare_model_for_kbit_training(self.model)
-
         peft_config = LoraConfig(
             task_type=TaskType.CAUSAL_LM, 
             inference_mode=False,
@@ -37,6 +31,8 @@ class SciLLM(nn.Module):
         )
 
         self.model = get_peft_model(self.model, peft_config)
+        # load the delta model path and train from it
+        self.model.from_pretrained(self.args['delta_model_path'])
         self.model.print_trainable_parameters()
         self.ppl_criterion = nn.CrossEntropyLoss(reduction='none')
 
@@ -57,8 +53,6 @@ class SciLLM(nn.Module):
             labels=inputs['labels'].to(f"cuda:{self.args['local_rank']}")
         )
         loss = outputs.loss
-        # trigger = list(self.model.base_model.model.model.layers[0].named_parameters())
-        
         # monitor token accuracy
         logits = outputs.logits[:, :-1, :]
         labels = inputs['labels'][:, 1:].to(f"cuda:{self.args['local_rank']}")

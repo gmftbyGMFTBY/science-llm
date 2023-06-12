@@ -3,6 +3,7 @@ from tqdm import tqdm
 import ipdb
 
 if __name__ == "__main__":
+    datasets = []
     for mode in ['train', 'dev', 'test']:
         data = json.load(open(f'qasper-{mode}-v0.3.json'))
         dataset = []
@@ -29,9 +30,12 @@ if __name__ == "__main__":
                         dataset.append({
                             'question': question,
                             'answer': answer,
-                            'evidence': evidence
+                            'evidence': '\n'.join(evidence)
                         })
 
         print(f'[!] collect {len(dataset)} samples')
-
-        json.dump(dataset, open(f'qasper_{mode}_sft.json', 'w'), indent=4, ensure_ascii=False)
+        datasets.append(dataset)
+    train_dataset = datasets[0] + datasets[1]
+    test_dataset = datasets[2]
+    json.dump(train_dataset, open(f'qasper_train_sft.json', 'w'), indent=4, ensure_ascii=False)
+    json.dump(test_dataset, open(f'qasper_test_sft.json', 'w'), indent=4, ensure_ascii=False)

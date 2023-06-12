@@ -4,6 +4,11 @@ models:
         agent_name: DeepSpeedAgent
         dataset: PretrainDataset
         test_dataset: PretrainTestDataset
+    scillm-sft:
+        model_name: SciSFTLLM 
+        agent_name: DeepSpeedAgent
+        dataset: QASPERDataset
+
 
 # ========= Global configuration ========== #
 logging_step: 5
