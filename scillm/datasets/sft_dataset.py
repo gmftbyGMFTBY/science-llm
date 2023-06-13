@@ -27,7 +27,7 @@ def preprocess(
         s_tokens = tokenizer.encode(s)
         t_tokens = tokenizer.encode(t)
         inpt = [bos_token_id] + s_tokens + [eos_token_id] + [bos_token_id] + t_tokens + [eos_token_id]
-        inpt = [bos_token_id] + [-100] + [eos_token_id] + [bos_token_id] + t_tokens + [eos_token_id]
+        label = [bos_token_id] + [-100] + [eos_token_id] + [bos_token_id] + t_tokens + [eos_token_id]
         inpt = inpt[-max_length:]
         label = label[-max_length:]
         input_ids.append(torch.LongTensor(inpt))
@@ -38,10 +38,11 @@ def preprocess(
 class QASPERDataset(Dataset):
     """Dataset for supervised fine-tuning."""
 
-    def __init__(self, data_path: str, tokenizer: transformers.PreTrainedTokenizer):
+    def __init__(self, **args):
         super(QASPERDataset, self).__init__()
-        list_data_dict = json.load(open(data_path))
-        self.tokenizer = tokenizer
+        self.args = args
+        list_data_dict = json.load(open(args['train_data_path']))
+        tokenizer = args['tokenizer']
 
         prompt_input = '### Input:\n{evidence}\n\n### Instruction:\n{question}\n\n### Response:'
         sources = [prompt_input.format_map(example) for example in tqdm(list_data_dict)]

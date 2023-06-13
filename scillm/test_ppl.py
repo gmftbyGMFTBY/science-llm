@@ -57,16 +57,16 @@ def main(args):
     args.update(load_config(args))
     model = LlamaForCausalLM.from_pretrained(
         pretrained_model_name_or_path=args['model_path'],
-        # load_in_4bit=True,
-        # max_memory={i: '24576MB' for i in range(torch.cuda.device_count())},
+        load_in_4bit=True,
+        max_memory={i: '24576MB' for i in range(torch.cuda.device_count())},
         torch_dtype=torch.bfloat16,
-        # quantization_config=BitsAndBytesConfig(
-        #     load_in_4bit=True,
-        #     bnb_4bit_compute_dtype=torch.bfloat16,
-        #     bnb_4bit_use_double_quant=True,
-        #     bnb_4bit_quant_type='nf4'
-        # )
-    ).cuda()
+        quantization_config=BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_compute_dtype=torch.bfloat16,
+            bnb_4bit_use_double_quant=True,
+            bnb_4bit_quant_type='nf4'
+        )
+    )
 
     peft_config = LoraConfig(
         task_type=TaskType.CAUSAL_LM,
@@ -77,13 +77,8 @@ def main(args):
         target_modules=['q_proj', 'k_proj', 'v_proj', 'o_proj', 'gate_proj', 'down_proj', 'up_proj']
     )
 
-    # model = get_peft_model(model, peft_config)
-    # delta_weight = torch.load(os.path.join(args['delta_model_path'], 'adapter_model.bin'))
-    # ipdb.set_trace()
-    # model.load_state_dict(delta_weight, strict=False)
-
+    model = prepare_model_for_kbit_training(model)
     model = PeftModel.from_pretrained(model, args['delta_model_path'])
-    # model = model.merge_and_unload()
     tokenizer = LlamaTokenizer.from_pretrained(args['model_path'])
     ppl_criterion = nn.CrossEntropyLoss(reduction='none')
     print(f'[!] load model and tokenizer over')

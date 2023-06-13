@@ -8,7 +8,6 @@ def parser_args():
     parser = argparse.ArgumentParser(description='train parameters')
     parser.add_argument('--model', type=str)
     parser.add_argument('--train_data_path', type=str)
-    parser.add_argument('--test_data_path', type=str)
     parser.add_argument('--local_rank', default=0, type=int)
     parser.add_argument('--model_path', type=str)
     parser.add_argument('--save_path', type=str)
@@ -61,9 +60,6 @@ def main(**args):
     # load train split
     args['data_path'] = os.path.join(args["train_data_path"], f'split_0{args["local_rank"]}')
     train_data, train_iter, sampler = load_dataset(args)
-    # load test split
-    args['data_path'] = args['test_data_path']
-    args['mode'] = 'train'
 
     length = args['total_step']
     args['total_steps'] = int(args['total_step']/8)

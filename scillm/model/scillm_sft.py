@@ -1,5 +1,6 @@
 from header import *
 from .utils import *
+from datasets import *
 
 class SciSFTLLM(nn.Module):
 
@@ -20,7 +21,6 @@ class SciSFTLLM(nn.Module):
             )
         )
 
-        self.model = prepare_model_for_kbit_training(self.model)
         peft_config = LoraConfig(
             task_type=TaskType.CAUSAL_LM, 
             inference_mode=False,
@@ -30,9 +30,14 @@ class SciSFTLLM(nn.Module):
             target_modules=['q_proj', 'k_proj', 'v_proj', 'o_proj', 'gate_proj', 'down_proj', 'up_proj']
         )
 
+        self.model = prepare_model_for_kbit_training(self.model)
         self.model = get_peft_model(self.model, peft_config)
-        # load the delta model path and train from it
-        self.model.from_pretrained(self.args['delta_model_path'])
+        delta_weight = torch.load(os.path.join(args['delta_model_path'], 'adapter_model.bin'))
+        delta_weight_ = OrderedDict()
+        for name, params in delta_weight.items():
+            name = name.replace('weight', 'default.weight')
+            delta_weight_[name] = params
+        self.model.load_state_dict(delta_weight_, strict=False)
         self.model.print_trainable_parameters()
         self.ppl_criterion = nn.CrossEntropyLoss(reduction='none')
 

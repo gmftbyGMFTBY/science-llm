@@ -8,6 +8,7 @@ def parser_args():
     parser = argparse.ArgumentParser(description='train parameters')
     parser.add_argument('--model', type=str)
     parser.add_argument('--train_data_path', type=str)
+    parser.add_argument('--test_data_path', type=str)
     parser.add_argument('--local_rank', default=0, type=int)
     parser.add_argument('--model_path', type=str)
     parser.add_argument('--delta_model_path', type=str)
