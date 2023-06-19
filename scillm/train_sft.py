@@ -91,6 +91,8 @@ def main(**args):
                 sum_writer=sum_writer
             )
             current_step += 1
+            if current_step > length:
+                break
         if current_step > length:
             break
 

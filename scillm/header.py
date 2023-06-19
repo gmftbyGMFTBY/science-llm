@@ -26,7 +26,8 @@ import logging
 from copy import deepcopy
 import ipdb
 import argparse
-from transformers import LlamaTokenizer, LlamaForCausalLM, LlamaConfig, AutoModelForCausalLM, BitsAndBytesConfig
+from transformers import LlamaTokenizer, LlamaForCausalLM, LlamaConfig, AutoModelForCausalLM, BitsAndBytesConfig, AutoTokenizer
+from transformers import StoppingCriteria, StoppingCriteriaList
 from torch.nn.utils.rnn import pad_sequence
 from peft import LoraConfig, TaskType, get_peft_model, prepare_model_for_kbit_training, PeftModel
 

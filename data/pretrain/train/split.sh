@@ -1,3 +1,4 @@
 #!/bin/bash
 
-split -l 35806 redpajama_tokens_train.json -d split_
+shuf train.txt -o train_shuffle.txt
+split -l 166084 train_shuffle.txt -d split_

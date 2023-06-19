@@ -1,27 +1,73 @@
-## 数据准备
+# Recoding PPL
 
-[Redpajama 数据集](https://github.com/togethercomputer/RedPajama-Data)中的ArXiv和CommonCrawl的部分，收集下载约4B左右的token
 
-## 代码准备
+| Checkpoints        | PPL       |
+| ------------------ | --------- |
+| LLaMA-7B           | 72.5932   |
+| SciLLM-7B (5%)     | 3.7634    |
+| SciLLM-7B (10%)    | 3.6565    |
+| SciLLM-7B (15%)    | 3.6122    |
+| SciLLM-7B (20%)    | 3.5838    |
+| SciLLM-7B (25%)    | 3.5719    |
+| SciLLM-7B (30%)    | 3.5711    |
+| SciLLM-7B (35%)    | 3.5704    |
+| SciLLM-7B (40%)    | 3.5612    |
+| SciLLM-7B (55%)    | 3.5341    |
 
-目前的代码可能还存在有少量的地方需要调整和修改，此外，需要添加[flash attention](https://github.com/lm-sys/FastChat/blob/4960ca702c66b9adaa65945746dba34f8d2c8ddc/fastchat/train/llama_flash_attn_monkey_patch.py#L110)以加快后续我们优化和训练模型的速度。
 
-训练模型，请直接运行脚本：
+| Checkpoints        | PPL       |
+| ------------------ | --------- |
+| Baichuan-7B        | 6.4137    |
+| SciLLM-7B (15%)    | 3.0814    |
 
-```bash
-./scripts/train_pretrain.sh
-```
 
-### 2023/06/02版本bugs：
-* int4 多卡训练 tensor 所在设备不匹配
-* flash attention 的适配未经验证
-* **NOTE**: transformers/peft/accelerate 库均需 clone github 最新 repo 后安装
-    ```commandline
-    pip install -q -U git+https://github.com/huggingface/transformers.git
-    pip install -q -U git+https://github.com/huggingface/peft.git
-    pip install -q -U git+https://github.com/huggingface/accelerate.git
-    ```
+# QASPER Zero-shot Evaluation
 
-## Demo 展示页准备
 
-可以参考一些现有的visual-language model的项目，比如[PandaGPT](https://panda-gpt.github.io/), [MiniGPT-4](https://minigpt-4.github.io/), [LLaVa](https://llava-vl.github.io/)
+| Checkpoint | Acc |
+| ---------- | --- |
+| LLaMA-7B   | 0.2568 |
+| ChatGPT    |  |
+| SciLLM-7B (45%) | 0.2643 |
+| SciLLM-7B (55%) | 0.2634 |
+
+# Generation Evaluation
+
+## Generation Evaluation on QASPER test set
+
+### Baselines
+
+7B models are evaluated:
+1. Alpaca (tianyi)
+2. Vicuna (tianyi)
+3. OpenAlpaca (tianyi)
+6. BaiChuan (jinyu)
+4. dolly (shuhang)
+5. ChatGLM (shuhang)
+7. LongFormer baseline in QASPER (shuhang)
+
+### Evaluation Metrics
+
+1. BLEU/ROUGE: 因为生成内容和答案一般邀请事实准确度，所以我们希望可以尽可能地匹配上
+2. BERTScore
+3. ChatGPT evaluation: 定义好对应地prompt，要求ChatGPT重点考虑和参考答案地匹配接近程度
+
+### Setting
+
+1. Greedy Search
+2. 生成最大长度为256或者到eos token提前结束生成
+3. 最大上下文2048长度
+4. Prompt需要包含以下两点内容：
+    * evidence：字符串，多个evidence使用\n拼接
+    * question: 用户的问题
+
+
+# TODO List
+
+- [ ] train the SciMRC and QASPER on Baichuan-7B model
+- [ ] train the Emptional Scientific Dialog on Baichuan-7B model
+- [ ] evaluate the performance between our model and other strong SFT baselines
+- [ ] evaluate the performance of our scientific pre-training
+- [ ] write the README
+- [ ] write the technical report
+- [ ] write the demo page

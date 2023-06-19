@@ -109,6 +109,51 @@ class PretrainTestDataset(Dataset):
             attention_mask=input_ids.ne(self.tokenizer.pad_token_id),
         )
 
+class PretrainQASPERTestDataset(Dataset):
+
+    def __init__(self, **args):
+        super(PretrainQASPERTestDataset, self).__init__()
+        self.args = args
+        self.tokenizer = args['tokenizer'] 
+        # cached dataset
+        with open(self.args['data_path']) as f:
+            data = json.load(f)
+
+        prompt_base = 'Above are multiple evidences for a given question. Please answer this question with Yes or No.\n\n'
+        self.data = []
+        self.labels = []
+        for sample in tqdm(data):
+            prompt = deepcopy(prompt_base)
+            prompt += f'The question is {sample["question"]}.\nThe answer is:'
+            prompt = f'{sample["evidence"]}\n\n' + prompt
+            tokens = self.tokenizer.encode(prompt, add_special_tokens=False)
+            if len(tokens) < 4096:
+                self.data.append(tokens)
+                self.labels.append(sample['answer'])
+        print(f'[!] collect {len(self.data)} multiple choices samples for testing')
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, i) -> Dict[str, torch.Tensor]:
+        return torch.LongTensor(self.data[i]), self.labels[i]
+
+    def collate(self, batch):
+        instances = [i for i, j in batch]
+        labels = [j for i, j in batch]
+        input_ids = torch.nn.utils.rnn.pad_sequence(
+            instances,
+            batch_first=True,
+            padding_value=self.tokenizer.pad_token_id
+        )
+        return dict(
+            input_ids=input_ids,
+            attention_mask=input_ids.ne(self.tokenizer.pad_token_id),
+            labels=labels
+        )
+
+
+
 if __name__ == "__main__":
     from transformers import LlamaTokenizer
     from tqdm import tqdm

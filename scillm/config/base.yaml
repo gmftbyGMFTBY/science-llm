@@ -3,22 +3,28 @@ models:
         model_name: SciLLM 
         agent_name: DeepSpeedAgent
         dataset: PretrainDataset
-        test_dataset: PretrainTestDataset
+        # test_dataset: PretrainTestDataset
+        test_dataset: PretrainQASPERTestDataset
     scillm-sft:
         model_name: SciSFTLLM 
         agent_name: DeepSpeedAgent
-        dataset: QASPERDataset
+        # dataset: QASPERDataset
+        dataset: EmotionalDataset
+        test_dataset: PretrainQASPERTestDataset
 
 
 # ========= Global configuration ========== #
 logging_step: 5
 eval_interval: 0.05
 max_dataset_cache_size: 100
-max_seq_length: 4096
-test_max_seq_length: 512
+# max_seq_length: 4096
+max_seq_length: 2048
+test_max_seq_length: 4096
 warmup_ratio: 0.05
 # 4 billion tokens need 122070 steps (each step optimize a batch with 64 batch size, and each instance has 4096 tokens)
-total_step: 122070 
+# total_step: 131024
+# total_step: 2000
+total_step: 500
 seed: 0
 epoch: 2
 # ========= Global configuration ========== #

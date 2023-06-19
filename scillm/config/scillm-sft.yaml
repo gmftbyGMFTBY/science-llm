@@ -7,8 +7,9 @@ random_prefix_len: 5
 sample_num: 2
 decoding_method: sampling
 generate_len: 512
+base_model_name: baichuan
 
 # lora hyper-parameters
-lora_r: 8
-lora_alpha: 32.0
-lora_dropout: 0.05
+lora_r: 72
+lora_alpha: 16.0
+lora_dropout: 0.1

@@ -8,18 +8,33 @@ class SciSFTLLM(nn.Module):
         super(SciSFTLLM, self).__init__()
         self.args = args
 
-        self.model = LlamaForCausalLM.from_pretrained(
-            pretrained_model_name_or_path=args['model_path'],
-            load_in_4bit=True,
-            max_memory={i: '24576MB' for i in range(torch.cuda.device_count())},
-            torch_dtype=torch.bfloat16,
-            quantization_config=BitsAndBytesConfig(
+        if self.args['base_model_name'] == 'llama':
+            self.model = LlamaForCausalLM.from_pretrained(
+                pretrained_model_name_or_path=args['model_path'],
                 load_in_4bit=True,
-                bnb_4bit_compute_dtype=torch.bfloat16,
-                bnb_4bit_use_double_quant=True,
-                bnb_4bit_quant_type='nf4'
+                max_memory={i: '24576MB' for i in range(torch.cuda.device_count())},
+                torch_dtype=torch.bfloat16,
+                quantization_config=BitsAndBytesConfig(
+                    load_in_4bit=True,
+                    bnb_4bit_compute_dtype=torch.bfloat16,
+                    bnb_4bit_use_double_quant=True,
+                    bnb_4bit_quant_type='nf4'
+                )
             )
-        )
+        else:
+            self.model = AutoModelForCausalLM.from_pretrained(
+                pretrained_model_name_or_path=args['model_path'],
+                load_in_4bit=True,
+                max_memory={i: '24576MB' for i in range(torch.cuda.device_count())},
+                torch_dtype=torch.bfloat16,
+                quantization_config=BitsAndBytesConfig(
+                    load_in_4bit=True,
+                    bnb_4bit_compute_dtype=torch.bfloat16,
+                    bnb_4bit_use_double_quant=True,
+                    bnb_4bit_quant_type='nf4'
+                ),
+                trust_remote_code=True
+            )
 
         peft_config = LoraConfig(
             task_type=TaskType.CAUSAL_LM, 
@@ -32,12 +47,16 @@ class SciSFTLLM(nn.Module):
 
         self.model = prepare_model_for_kbit_training(self.model)
         self.model = get_peft_model(self.model, peft_config)
-        delta_weight = torch.load(os.path.join(args['delta_model_path'], 'adapter_model.bin'))
-        delta_weight_ = OrderedDict()
-        for name, params in delta_weight.items():
-            name = name.replace('weight', 'default.weight')
-            delta_weight_[name] = params
-        self.model.load_state_dict(delta_weight_, strict=False)
+        if args['delta_model_path'] != 'None':
+            delta_weight = torch.load(os.path.join(args['delta_model_path'], 'adapter_model.bin'))
+            delta_weight_ = OrderedDict()
+            for name, params in delta_weight.items():
+                name = name.replace('weight', 'default.weight')
+                delta_weight_[name] = params
+            self.model.load_state_dict(delta_weight_, strict=False)
+            print(f'[!] load model weights from {args["delta_model_path"]}')
+        else:
+            print(f'[!] donot load any model weights, just only QLoRA')
         self.model.print_trainable_parameters()
         self.ppl_criterion = nn.CrossEntropyLoss(reduction='none')
 

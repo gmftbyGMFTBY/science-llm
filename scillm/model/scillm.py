@@ -10,18 +10,35 @@ class SciLLM(nn.Module):
 
         # TODO: replace_llama_attn_with_flash_attn()
         # model loading
-        self.model = LlamaForCausalLM.from_pretrained(
-            pretrained_model_name_or_path=args['model_path'],
-            load_in_4bit=True,
-            max_memory={i: '24576MB' for i in range(torch.cuda.device_count())},
-            torch_dtype=torch.bfloat16,
-            quantization_config=BitsAndBytesConfig(
+        if self.args['base_model_name'] == 'llama':
+            print(f'[!] train with LLaMA-7B model')
+            self.model = LlamaForCausalLM.from_pretrained(
+                pretrained_model_name_or_path=args['model_path'],
                 load_in_4bit=True,
-                bnb_4bit_compute_dtype=torch.bfloat16,
-                bnb_4bit_use_double_quant=True,
-                bnb_4bit_quant_type='nf4'
+                max_memory={i: '24576MB' for i in range(torch.cuda.device_count())},
+                torch_dtype=torch.bfloat16,
+                quantization_config=BitsAndBytesConfig(
+                    load_in_4bit=True,
+                    bnb_4bit_compute_dtype=torch.bfloat16,
+                    bnb_4bit_use_double_quant=True,
+                    bnb_4bit_quant_type='nf4'
+                )
             )
-        )
+        elif self.args['base_model_name'] == 'baichuan':
+            print(f'[!] train with BAICHUAN-7B model')
+            self.model = AutoModelForCausalLM.from_pretrained(
+                pretrained_model_name_or_path=args['model_path'],
+                load_in_4bit=True,
+                max_memory={i: '24576MB' for i in range(torch.cuda.device_count())},
+                torch_dtype=torch.bfloat16,
+                quantization_config=BitsAndBytesConfig(
+                    load_in_4bit=True,
+                    bnb_4bit_compute_dtype=torch.bfloat16,
+                    bnb_4bit_use_double_quant=True,
+                    bnb_4bit_quant_type='nf4'
+                ),
+                trust_remote_code=True
+            )
 
         # peft preparation
         # self.model.gradient_checkpointing_enable()
@@ -33,7 +50,7 @@ class SciLLM(nn.Module):
             r=self.args['lora_r'], 
             lora_alpha=self.args['lora_alpha'], 
             lora_dropout=self.args['lora_dropout'],
-            target_modules=['q_proj', 'k_proj', 'v_proj', 'o_proj', 'gate_proj', 'down_proj', 'up_proj']
+            target_modules=['o_proj', 'W_pack', 'gate_proj', 'down_proj', 'up_proj']
         )
 
         self.model = get_peft_model(self.model, peft_config)

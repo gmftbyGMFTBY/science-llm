@@ -40,33 +40,43 @@ def main_original(args):
                 bnb_4bit_use_double_quant=True,
                 bnb_4bit_quant_type='nf4'
             ),
-            trust_remote_code=True,
-            use_auth_token=True
+            trust_remote_code=True
         )
         tokenizer = AutoTokenizer.from_pretrained(args['model_path'], trust_remote_code=True)
 
     ppl_criterion = nn.CrossEntropyLoss(reduction='none')
     print(f'[!] load model and tokenizer over')
-    
-    # load test dataset
-    with torch.no_grad():
-        _, test_iter, _ = load_dataset(args)
-        losses = []
-        for batch in tqdm(test_iter):
-            outputs = model(
-                input_ids=batch['input_ids'].cuda(),
-                attention_mask=batch['attention_mask'].cuda(),
-            )
-            logits = outputs.logits[:, :-1, :]
-            loss = ppl_criterion(logits.reshape(-1, logits.size(-1)), batch['labels'].cuda()[:, 1:].reshape(-1)).tolist()
-            losses.extend(loss)
-        ppl = np.exp(np.mean(losses))
-        print(f'[!] ppl: {round(ppl, 4)}')
 
+    # load test dataset
+    # indexes = [1939, 3869]
+    indexes = [2005, 8738]
+    with torch.no_grad():
+        args['mode'] = 'test'
+        _, test_iter, _ = load_dataset(args)
+        acc = []
+        pbar = tqdm(test_iter)
+        for batch in pbar:
+            length = len(batch['input_ids'][0])
+            outputs = model.generate(
+                input_ids=batch['input_ids'].cuda(),
+                max_new_tokens=1,
+                output_scores=True,
+                return_dict_in_generate=True
+            )
+            logits = outputs.scores[-1]
+            logits = logits[0, indexes]
+            max_ = logits.argmax(dim=-1).item()
+            if max_ == batch['labels'][0]:
+                acc.append(1)
+            else:
+                acc.append(0)
+            pbar.set_description(f'{round(np.mean(acc), 4)}')
+    print(f'[!] accuracy is: {round(np.mean(acc), 4)}')
+    
 
 def main(args):
     args.update({
-        'lora_r': 64,
+        'lora_r': 72,
         'lora_alpha': 16,
         'lora_dropout': 0.1,
         'mode': 'test'
@@ -91,7 +101,6 @@ def main(args):
             pretrained_model_name_or_path=args['model_path'],
             load_in_4bit=True,
             max_memory={i: '24576MB' for i in range(torch.cuda.device_count())},
-            device_map='auto',
             torch_dtype=torch.bfloat16,
             quantization_config=BitsAndBytesConfig(
                 load_in_4bit=True,
@@ -101,7 +110,7 @@ def main(args):
             ),
             trust_remote_code=True
         )
-        tokenizer = AutoTokenizer.from_pretrained(args['model_path'], trust_remote_code=True)
+        tokenizer = LlamaTokenizer.from_pretrained(args['model_path'], trust_remote_code=True)
 
     peft_config = LoraConfig(
         task_type=TaskType.CAUSAL_LM,
@@ -109,7 +118,8 @@ def main(args):
         r=args['lora_r'],
         lora_alpha=args['lora_alpha'],
         lora_dropout=args['lora_dropout'],
-        target_modules=['q_proj', 'k_proj', 'v_proj', 'o_proj', 'gate_proj', 'down_proj', 'up_proj']
+        # target_modules=['q_proj', 'k_proj', 'v_proj', 'o_proj', 'gate_proj', 'down_proj', 'up_proj']
+        target_modules=['o_proj', 'W_pack', 'gate_proj', 'down_proj', 'up_proj']
     )
 
     model = prepare_model_for_kbit_training(model)
@@ -118,20 +128,31 @@ def main(args):
     print(f'[!] load model and tokenizer over')
     
     # load test dataset
+    # indexes = [1939, 3869]
+    indexes = [2005, 8738]
     with torch.no_grad():
         args['mode'] = 'test'
         _, test_iter, _ = load_dataset(args)
-        losses = []
-        for batch in tqdm(test_iter):
-            outputs = model(
+        acc = []
+        pbar = tqdm(test_iter)
+        for batch in pbar:
+            length = len(batch['input_ids'][0])
+            outputs = model.generate(
                 input_ids=batch['input_ids'].cuda(),
-                attention_mask=batch['attention_mask'].cuda(),
+                max_new_tokens=1,
+                output_scores=True,
+                return_dict_in_generate=True
             )
-            logits = outputs.logits[:, :-1, :]
-            loss = ppl_criterion(logits.reshape(-1, logits.size(-1)), batch['labels'].cuda()[:, 1:].reshape(-1)).tolist()
-            losses.extend(loss)
-        ppl = np.exp(np.mean(losses))
-        print(f'[!] ppl: {round(ppl, 4)}')
+            result = tokenizer.decode(outputs['sequences'][0])
+            logits = outputs.scores[-1]
+            logits = logits[0, indexes]
+            max_ = logits.argmax(dim=-1).item()
+            if max_ == batch['labels'][0]:
+                acc.append(1)
+            else:
+                acc.append(0)
+            pbar.set_description(f'{round(np.mean(acc), 4)}')
+    print(f'[!] accuracy is: {round(np.mean(acc), 4)}')
 
 if __name__ == "__main__":
     args = vars(parser_args())

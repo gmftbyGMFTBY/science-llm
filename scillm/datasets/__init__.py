@@ -4,7 +4,12 @@ from .sft_dataset import *
 from .pretrain_dataset import *
 
 def load_dataset(args):
-    tokenizer = LlamaTokenizer.from_pretrained(args['model_path'])
+    if args['base_model_name'] == 'llama':
+        tokenizer = LlamaTokenizer.from_pretrained(args['model_path'])
+        tokenizer.pad_token = tokenizer.eos_token
+    elif args['base_model_name'] == 'baichuan':
+        tokenizer = AutoTokenizer.from_pretrained(args['model_path'], trust_remote_code=True)
+        tokenizer.pad_token = tokenizer.eos_token
     tokenizer.pad_token_id = tokenizer.eos_token_id
     if args['mode'] == 'test':
         dataset_name = args['models'][args['model']]['test_dataset']
