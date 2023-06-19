@@ -14,3 +14,4 @@ split_*
 
 !data/redpajama_test_tokens.json
 !scillm/dsconfig/*.json
+!data/*.py
