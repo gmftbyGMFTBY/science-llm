@@ -55,7 +55,7 @@
 ### Setting
 
 1. Greedy Search
-2. 生成最大长度为256或者到eos token提前结束生成
+2. 生成最大长度为128或者到eos token提前结束生成
 3. 最大上下文2048长度
 4. Prompt需要包含以下两点内容：
     * evidence：字符串，多个evidence使用\n拼接
@@ -65,7 +65,8 @@
 # TODO List
 
 - [ ] train the SciMRC and QASPER on Baichuan-7B model
-- [ ] train the Emptional Scientific Dialog on Baichuan-7B model
+- [x] train the Emptional Scientific Dialog on Baichuan-7B model
+- [x] make the api deployment
 - [ ] evaluate the performance between our model and other strong SFT baselines
 - [ ] evaluate the performance of our scientific pre-training
 - [ ] write the README

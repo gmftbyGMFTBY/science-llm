@@ -78,7 +78,6 @@ if __name__ == "__main__":
     test_dataset = remove_duplicate(test_dataset)
     json.dump(test_dataset, open(f'qasper_test_sft.json', 'w'), indent=4, ensure_ascii=False)
 
-
     train_dataset = yes_no_datasets[0] + yes_no_datasets[1]
     test_dataset = yes_no_datasets[2]
     json.dump(train_dataset, open(f'qasper_yes_no_train_sft.json', 'w'), indent=4, ensure_ascii=False)

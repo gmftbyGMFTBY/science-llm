@@ -30,6 +30,7 @@ from transformers import LlamaTokenizer, LlamaForCausalLM, LlamaConfig, AutoMode
 from transformers import StoppingCriteria, StoppingCriteriaList
 from torch.nn.utils.rnn import pad_sequence
 from peft import LoraConfig, TaskType, get_peft_model, prepare_model_for_kbit_training, PeftModel
+from flask import Flask, request, jsonify, make_response, session
 
 logging.getLogger("transformers").setLevel(logging.WARNING)
 logging.getLogger("transformers.tokenization_utils").setLevel(logging.ERROR)
