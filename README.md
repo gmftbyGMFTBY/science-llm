@@ -18,6 +18,7 @@
     * <a href='#install_environment'>2.1. Environment Installation</a>
     * <a href='#download_mozi_model'/>2.2. Prepare Mozi Checkpoint</a>
     * <a href='#running_demo'>2.5. Deploying Demo</a>
+* <a href='#train_scidpr'>3. Train Your Own SciDPR model</a>
 * <a href='#train_pandagpt'>3. Train Your Own Mozi models</a>
     * <a href='#data_preparation'>3.1. Data Preparation</a>
     * <a href='#training_configurations'>3.2. Training Configurations</a>
@@ -127,15 +128,24 @@ For the paper-ground dialog, the input `POST` request should be like:
 
 ****
 
+<span id='train_scidpr'/>
+
+### 3. Train SciDPR model for Mozi Model: <a href='#all_catelogue'>[Back to Top]</a>
+
+SciDPR servers the evidence retrieval component for Mozi paper-ground question answering models, which retrieves related evidences of user's queries. 
+For model details about SciDPR model, please refer to this [README.md](./SciDPR/README.md) file.
+
+****
+
 <span id='train_pandagpt'/>
 
-### 3. Train Your Own Mozi Model: <a href='#all_catelogue'>[Back to Top]</a>
+### 4. Train Your Own Mozi Model: <a href='#all_catelogue'>[Back to Top]</a>
 
 **Prerequisites:** Before training the model, making sure the environment is properly installed and the checkpoints of LLaMA-7B and Baichuan-7B are downloaded.
 
 <span id='data_preparation'/>
 
-#### 3.1. Data Preparation: <a href='#all_catelogue'>[Back to Top]</a>
+#### 4.1. Data Preparation: <a href='#all_catelogue'>[Back to Top]</a>
 
 **Declaimer:** To ensure the reproducibility of our results, we have released our training dataset. The dataset must be used for research purpose only. The use of the dataset must comply with the licenses from original sources, i.e. QASPER and SciMRC. These datasets may be taken down when requested by the original authors.
 
@@ -164,7 +174,7 @@ After downloading these datasets and saving them at the proper path, please refe
 
 <span id='training_configurations'/>
 
-#### 3.2 Training Configurations: <a href='#all_catelogue'>[Back to Top]</a>
+#### 4.2 Training Configurations: <a href='#all_catelogue'>[Back to Top]</a>
 
 To train the model properly, we use the [QLoRA](https://github.com/artidoro/qlora) and [deepspeed](http://deepspeed.readthedocs.io/) toolkit. Before running, please make sure these essential toolkit are downloaded.
 
@@ -182,12 +192,12 @@ Note that these models are pre-trained on 8 x 3090 (24G) GPUs for over 9 days (o
 <span id='model_training'/>
 
 
-#### 3.3. Training Mozi Models: <a href='#all_catelogue'>[Back to Top]</a>
+#### 4.3. Training Mozi Models: <a href='#all_catelogue'>[Back to Top]</a>
 
 <span id='scientific_pretraining'/>
 
 
-##### 3.3.1. Scientific Pre-training Mozi Models: <a href='#all_catelogue'>[Back to Top]</a>
+##### 4.3.1. Scientific Pre-training Mozi Models: <a href='#all_catelogue'>[Back to Top]</a>
 
 To pre-train Mozi on scientific pre-training corpus with 4B tokens, please run the following commands:
 
@@ -209,7 +219,7 @@ Note that the total training steps can be set in the `total_step` argument at [.
 <span id='paper_ground_training'/>
 
 
-##### 3.3.2. Supversied Fine-tuning Mozi Models: <a href='#all_catelogue'>[Back to Top]</a>
+##### 4.3.2. Supversied Fine-tuning Mozi Models: <a href='#all_catelogue'>[Back to Top]</a>
 
 Furthermore, to supervised fine-tune Mozi models on paper-ground question answering corpus, first make sure the `dataset` is set as `QASPERDataset`, and then please run the following commands:
 ```bash
