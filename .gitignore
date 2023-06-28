@@ -11,6 +11,8 @@ rest/
 ckpt/
 log/
 split_*
+SciDPR/data/*
+SciDPR/ckpt/*
 
 !data/redpajama_test_tokens.json
 !scillm/dsconfig/*.json

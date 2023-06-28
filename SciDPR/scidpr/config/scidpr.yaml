@@ -1,0 +1,16 @@
+question_model: facebook/dpr-question_encoder-single-nq-base 
+answer_model: facebook/dpr-ctx_encoder-single-nq-base 
+q_max_len: 128
+a_max_len: 256
+
+# train configuration
+train:
+    lr: 0.00005
+    epoch: 5
+    dropout_rate: 1.0
+    grad_clip: 1.0
+    seed: 0
+    batch_size: 16 
+    max_len: 256
+    warmup_ratio: 0.05
+    negative_num: 8

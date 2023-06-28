@@ -81,10 +81,10 @@ class PretrainTestDataset(Dataset):
         self.tokenizer = args['tokenizer'] 
         # cached dataset
         self.cache_f_reader = open(self.args['data_path'])
-        self.cache = list(islice(self.cache_f_reader, 0, 1000))
+        self.cache = list(islice(self.cache_f_reader, 0, 100))
         self.cache = [json.loads(i) for i in self.cache]
         self.cache_tokens = []
-        for item in self.cache:
+        for item in tqdm(self.cache):
             self.cache_tokens += item['tokens'] + [self.tokenizer.eos_token_id]
         self.tokens = [self.cache_tokens[i:i+self.args['test_max_seq_length']]for i in range(0, len(self.cache_tokens), self.args['test_max_seq_length'])]
         self.tokens = self.tokens[:100]
@@ -119,13 +119,16 @@ class PretrainQASPERTestDataset(Dataset):
         with open(self.args['data_path']) as f:
             data = json.load(f)
 
-        prompt_base = 'Above are multiple evidences for a given question. Please answer this question with Yes or No.\n\n'
+        prompt_base = 'Above are evidences. Please select one correct choice for the following question based on it.\n'
+        demonstrations = f'## Description: Please refer to the evidence to answer the question with Yes or No.\n\n\n### Evidence:\nRumour detection on social media is a novel research field without official data sets. Since licences agreements forbid redistribution of data, no data sets from previous publications are available. We therefore followed previous researchers like Liu et. al (2015) and Yang et. al (2012) and created our own dataset.\nWe therefore followed previous researchers like Liu et. al (2015) and Yang et. al (2012) and created our own dataset.\n### Question:\nDo they build a dataset of rumors?\n### Choices:\nA. No.\nB. Yes\n### Answer:\nYes.\n\n\n'
+        demonstrations += f'### Evidence:\nWikipedia. We used the January 2018 English Wikipedia dataset as one of the corpora on which to train Vecsigrafo. As opposed to SciGraph or SemScholar, specific of the scientific domain, Wikipedia is a source of general-purpose information.\nAs opposed to SciGraph or SemScholar, specific of the scientific domain, Wikipedia is a source of general-purpose information.\n### Question:\nIs the data specific to a domain?\n### Choices:\nA. No.\nB. Yes.\n### Answer:\nNo.\n\n\n'
+        demonstrations += f'### Evidence:\nWhile the structure of our introduced model allows us to easily include more linguistic features that could potentially improve our predictive power, such as lexicons, since our focus is to study sentence representation for emotion intensity, we do not experiment adding any additional sources of information as input.\nWhile the structure of our introduced model allows us to easily include more linguistic features that could potentially improve our predictive power, such as lexicons, since our focus is to study sentence representation for emotion intensity, we do not experiment adding any additional sources of information as input.\n### Question:\ndid they experiment with lexicons?\n### Choices:\nA. No.\nB. Yes\n### Answer:\nNo.\n\n\n'
         self.data = []
         self.labels = []
         for sample in tqdm(data):
-            prompt = deepcopy(prompt_base)
-            prompt += f'The question is {sample["question"]}.\nThe answer is:'
-            prompt = f'{sample["evidence"]}\n\n' + prompt
+            # prompt = deepcopy(prompt_base)
+            prompt = f'### Question:\n{sample["question"]}.\n### Choices:\nA. No.\nB. Yes.\n### Answer:\n'
+            prompt = demonstrations + f'### Evidence:\n{sample["evidence"]}\n' + prompt
             tokens = self.tokenizer.encode(prompt, add_special_tokens=False)
             if len(tokens) < 4096:
                 self.data.append(tokens)

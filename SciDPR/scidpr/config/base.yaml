@@ -1,0 +1,13 @@
+datasets: 
+    qasper: en
+    scimrc: en
+
+models:
+    scidpr: 
+        model_name: SciDPR
+        dataset_name: DPRDataset 
+
+# ========= Global configuration ========== #
+root_dir: /home/johnlan/SciDPR
+version: 0
+# ========= Global configuration ========== #

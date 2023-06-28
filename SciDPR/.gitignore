@@ -1,0 +1,8 @@
+*.json
+*.txt
+ckpt
+rest
+log
+*.zip
+*.tgz
+*.pyc

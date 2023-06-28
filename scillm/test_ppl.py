@@ -66,7 +66,7 @@ def main_original(args):
 
 def main(args):
     args.update({
-        'lora_r': 64,
+        'lora_r': 72,
         'lora_alpha': 16,
         'lora_dropout': 0.1,
         'mode': 'test'
@@ -86,7 +86,17 @@ def main(args):
             )
         )
         tokenizer = LlamaTokenizer.from_pretrained(args['model_path'])
+
+        peft_config = LoraConfig(
+            task_type=TaskType.CAUSAL_LM,
+            inference_mode=True,
+            r=args['lora_r'],
+            lora_alpha=args['lora_alpha'],
+            lora_dropout=args['lora_dropout'],
+            target_modules=['q_proj', 'k_proj', 'v_proj', 'o_proj', 'gate_proj', 'down_proj', 'up_proj']
+        )
     else:
+        args['lora_r'] = 72
         model = AutoModelForCausalLM.from_pretrained(
             pretrained_model_name_or_path=args['model_path'],
             load_in_4bit=True,
@@ -103,14 +113,14 @@ def main(args):
         )
         tokenizer = AutoTokenizer.from_pretrained(args['model_path'], trust_remote_code=True)
 
-    peft_config = LoraConfig(
-        task_type=TaskType.CAUSAL_LM,
-        inference_mode=True,
-        r=args['lora_r'],
-        lora_alpha=args['lora_alpha'],
-        lora_dropout=args['lora_dropout'],
-        target_modules=['q_proj', 'k_proj', 'v_proj', 'o_proj', 'gate_proj', 'down_proj', 'up_proj']
-    )
+        peft_config = LoraConfig(
+            task_type=TaskType.CAUSAL_LM,
+            inference_mode=True,
+            r=args['lora_r'],
+            lora_alpha=args['lora_alpha'],
+            lora_dropout=args['lora_dropout'],
+            target_modules=['o_proj', 'W_pack', 'gate_proj', 'down_proj', 'up_proj']
+        )
 
     model = prepare_model_for_kbit_training(model)
     model = PeftModel.from_pretrained(model, args['delta_model_path'])

@@ -28,6 +28,7 @@ def main_original(args):
             )
         )
         tokenizer = LlamaTokenizer.from_pretrained(args['model_path'])
+        indexes = [3782, 8241]
     else:
         model = AutoModelForCausalLM.from_pretrained(
             pretrained_model_name_or_path=args['model_path'],
@@ -43,13 +44,12 @@ def main_original(args):
             trust_remote_code=True
         )
         tokenizer = AutoTokenizer.from_pretrained(args['model_path'], trust_remote_code=True)
+        indexes = [4094, 9446]
 
     ppl_criterion = nn.CrossEntropyLoss(reduction='none')
     print(f'[!] load model and tokenizer over')
 
     # load test dataset
-    # indexes = [1939, 3869]
-    indexes = [2005, 8738]
     with torch.no_grad():
         args['mode'] = 'test'
         _, test_iter, _ = load_dataset(args)
@@ -63,6 +63,7 @@ def main_original(args):
                 output_scores=True,
                 return_dict_in_generate=True
             )
+            result = tokenizer.decode(outputs['sequences'][0])
             logits = outputs.scores[-1]
             logits = logits[0, indexes]
             max_ = logits.argmax(dim=-1).item()
@@ -76,7 +77,7 @@ def main_original(args):
 
 def main(args):
     args.update({
-        'lora_r': 72,
+        'lora_r': 64,
         'lora_alpha': 16,
         'lora_dropout': 0.1,
         'mode': 'test'
@@ -96,7 +97,18 @@ def main(args):
             )
         )
         tokenizer = LlamaTokenizer.from_pretrained(args['model_path'])
+
+        peft_config = LoraConfig(
+            task_type=TaskType.CAUSAL_LM,
+            inference_mode=True,
+            r=args['lora_r'],
+            lora_alpha=args['lora_alpha'],
+            lora_dropout=args['lora_dropout'],
+            target_modules=['q_proj', 'k_proj', 'v_proj', 'o_proj', 'gate_proj', 'down_proj', 'up_proj']
+        )
+        indexes = [3782, 8241]
     else:
+        args['lora_r'] = 72
         model = AutoModelForCausalLM.from_pretrained(
             pretrained_model_name_or_path=args['model_path'],
             load_in_4bit=True,
@@ -110,17 +122,17 @@ def main(args):
             ),
             trust_remote_code=True
         )
-        tokenizer = LlamaTokenizer.from_pretrained(args['model_path'], trust_remote_code=True)
+        tokenizer = AutoTokenizer.from_pretrained(args['model_path'], trust_remote_code=True)
 
-    peft_config = LoraConfig(
-        task_type=TaskType.CAUSAL_LM,
-        inference_mode=True,
-        r=args['lora_r'],
-        lora_alpha=args['lora_alpha'],
-        lora_dropout=args['lora_dropout'],
-        # target_modules=['q_proj', 'k_proj', 'v_proj', 'o_proj', 'gate_proj', 'down_proj', 'up_proj']
-        target_modules=['o_proj', 'W_pack', 'gate_proj', 'down_proj', 'up_proj']
-    )
+        peft_config = LoraConfig(
+            task_type=TaskType.CAUSAL_LM,
+            inference_mode=True,
+            r=args['lora_r'],
+            lora_alpha=args['lora_alpha'],
+            lora_dropout=args['lora_dropout'],
+            target_modules=['o_proj', 'W_pack', 'gate_proj', 'down_proj', 'up_proj']
+        )
+        indexes = [4094, 9446]
 
     model = prepare_model_for_kbit_training(model)
     model = PeftModel.from_pretrained(model, args['delta_model_path'])
@@ -128,8 +140,6 @@ def main(args):
     print(f'[!] load model and tokenizer over')
     
     # load test dataset
-    # indexes = [1939, 3869]
-    indexes = [2005, 8738]
     with torch.no_grad():
         args['mode'] = 'test'
         _, test_iter, _ = load_dataset(args)

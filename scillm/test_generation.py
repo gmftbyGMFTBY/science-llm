@@ -25,6 +25,7 @@ def parser_args():
     parser.add_argument('--data_path', default='decapoda-research/llama-7b-hf', type=str)
     parser.add_argument('--delta_model_path', default='ckpt/scillm/pytorch_model.bin', type=str)
     parser.add_argument('--result_path', default='decapoda-research/llama-7b-hf', type=str)
+    parser.add_argument('--recall', default='False', type=str)
     return parser.parse_args()
 
 
@@ -57,7 +58,7 @@ def main_emotional(args):
         r=args['lora_r'],
         lora_alpha=args['lora_alpha'],
         lora_dropout=args['lora_dropout'],
-        target_modules=['q_proj', 'k_proj', 'v_proj', 'o_proj', 'gate_proj', 'down_proj', 'up_proj']
+        target_modules=['o_proj', 'W_pack', 'gate_proj', 'down_proj', 'up_proj']
     )
 
     model = prepare_model_for_kbit_training(model)
@@ -67,7 +68,8 @@ def main_emotional(args):
 
     with torch.no_grad():
         results = []
-        stopping_criteria = StoppingCriteriaList([StoppingCriteriaSub(stops=[0], encounters=1)])
+        # stopping_criteria = StoppingCriteriaList([StoppingCriteriaSub(stops=[0], encounters=1)])
+        # stopping_criteria = StoppingCriteriaList([StoppingCriteriaSub(stops=[0], encounters=3)])
         history = []
         while True:
             utterance = input('Human: ')
@@ -97,10 +99,10 @@ def main_emotional(args):
 
 def main(args):
     args.update({
-        'lora_r': 72,
+        'lora_r': 64,
         'lora_alpha': 16,
         'lora_dropout': 0.1,
-        'mode': 'test'
+        'mode': 'test',
     })
     args.update(load_config(args))
     if args['base_model_name'] == 'llama':
@@ -117,6 +119,15 @@ def main(args):
             )
         )
         tokenizer = LlamaTokenizer.from_pretrained(args['model_path'])
+
+        peft_config = LoraConfig(
+            task_type=TaskType.CAUSAL_LM,
+            inference_mode=True,
+            r=args['lora_r'],
+            lora_alpha=args['lora_alpha'],
+            lora_dropout=args['lora_dropout'],
+            target_modules=['q_proj', 'k_proj', 'v_proj', 'o_proj', 'gate_proj', 'down_proj', 'up_proj']
+        )
     else:
         model = AutoModelForCausalLM.from_pretrained(
             pretrained_model_name_or_path=args['model_path'],
@@ -133,14 +144,14 @@ def main(args):
         )
         tokenizer = AutoTokenizer.from_pretrained(args['model_path'], trust_remote_code=True)
 
-    peft_config = LoraConfig(
-        task_type=TaskType.CAUSAL_LM,
-        inference_mode=True,
-        r=args['lora_r'],
-        lora_alpha=args['lora_alpha'],
-        lora_dropout=args['lora_dropout'],
-        target_modules=['q_proj', 'k_proj', 'v_proj', 'o_proj', 'gate_proj', 'down_proj', 'up_proj']
-    )
+        peft_config = LoraConfig(
+            task_type=TaskType.CAUSAL_LM,
+            inference_mode=True,
+            r=args['lora_r'],
+            lora_alpha=args['lora_alpha'],
+            lora_dropout=args['lora_dropout'],
+            target_modules=['o_proj', 'W_pack', 'gate_proj', 'down_proj', 'up_proj']
+        )
 
     model = prepare_model_for_kbit_training(model)
     model = PeftModel.from_pretrained(model, args['delta_model_path'])
@@ -158,12 +169,17 @@ def main(args):
 
     with torch.no_grad():
         results = []
-        stopping_criteria = StoppingCriteriaList([StoppingCriteriaSub(stops=[0], encounters=1)])
+        stopping_criteria = StoppingCriteriaList([StoppingCriteriaSub(stops=[2], encounters=1)])
         f = open(args['result_path'], 'w')
         for item in tqdm(data):
             q = item['question']
-            evidence = item['evidence']
-            prompt = f'### Evidence:\n{evidence}\n\n### Instruction:\n{q}\n\n### Response:' 
+            if args['recall'] == 'True':
+                evidence = '\n'.join(item['recall_evidence'])
+            elif args['recall'] == 'False':
+                evidence = item['evidence']
+            else:
+                raise Exception(f'[!] Unknown recall mode: {args["recall"]}')
+            prompt = f'### Evidence:\n{evidence}\n\n### Instruction:\n{q}\n\n### Response:\n' 
             tokens = tokenizer.encode(prompt, add_special_tokens=False)[-args['max_seq_length']:]
             tokens = torch.LongTensor(tokens).cuda()
             length = len(tokens)
@@ -175,10 +191,8 @@ def main(args):
                 max_new_tokens=128,
                 return_dict_in_generate=True,
                 stopping_criteria=stopping_criteria,
-                # do_sample=True,
-                # top_p=0.92,
-                # top_k=50
             )
+            ipdb.set_trace()
             generation = tokenizer.decode(outputs['sequences'][0, length:], skip_special_tokens=True)
             result_item = deepcopy(item)
             result_item['generation'] = generation

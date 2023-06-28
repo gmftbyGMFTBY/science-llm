@@ -19,15 +19,14 @@ def preprocess(
     targets: Sequence[str],
     tokenizer: transformers.PreTrainedTokenizer,
     max_length: str,
-    bos_token_id,
     eos_token_id
 ) -> Dict:
     input_ids, labels = [], []
     for s, t in zip(sources, targets):
         s_tokens = tokenizer.encode(s, add_special_tokens=False)
         t_tokens = tokenizer.encode(t, add_special_tokens=False)
-        inpt = s_tokens + t_tokens + [eos_token_id]
-        label = [-100] * len(s_tokens) + t_tokens + [eos_token_id]
+        inpt = s_tokens + t_tokens + [2]
+        label = [-100] * len(s_tokens) + t_tokens + [2]
         inpt = inpt[-max_length:]
         label = label[-max_length:]
         input_ids.append(torch.LongTensor(inpt))
@@ -44,10 +43,10 @@ class QASPERDataset(Dataset):
         list_data_dict = json.load(open(args['train_data_path']))
         self.tokenizer = args['tokenizer']
 
-        prompt_input = '### Evidence:\n{evidence}\n\n### Instruction:\n{question}\n\n### Response:'
+        prompt_input = '### Evidence:\n{evidence}\n\n### Instruction:\n{question}\n\n### Response:\n'
         sources = [prompt_input.format_map(example) for example in tqdm(list_data_dict)]
         targets = [example['answer'] for example in list_data_dict]
-        data_dict = preprocess(sources, targets, self.tokenizer, self.args['max_seq_length'], self.tokenizer.bos_token_id, self.tokenizer.eos_token_id)
+        data_dict = preprocess(sources, targets, self.tokenizer, self.args['max_seq_length'], self.tokenizer.eos_token_id)
         self.input_ids = data_dict["input_ids"]
         self.labels = data_dict["labels"]
         print(f'[!] collect {len(self.input_ids)} samples for training')
@@ -110,7 +109,7 @@ class EmotionalDataset(Dataset):
         input_ids = torch.nn.utils.rnn.pad_sequence(
             input_ids,
             batch_first=True,
-            padding_value=self.tokenizer.eos_token_id
+            padding_value=2
         )
         labels = torch.nn.utils.rnn.pad_sequence(labels, batch_first=True, padding_value=-100)
         return dict(

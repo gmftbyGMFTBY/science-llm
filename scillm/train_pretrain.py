@@ -74,6 +74,7 @@ def main(**args):
 
     # set the evaluation step
     args['eval_and_save_steps'] = set([int(length * i) for i in np.arange(0, 1, args['eval_interval'])][1:])
+    args['eval_and_save_steps'].add(length)
     print(f'[!] evaluate step: {args["eval_and_save_steps"]}')
 
     # begin to train

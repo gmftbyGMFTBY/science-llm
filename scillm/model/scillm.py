@@ -24,6 +24,15 @@ class SciLLM(nn.Module):
                     bnb_4bit_quant_type='nf4'
                 )
             )
+
+            peft_config = LoraConfig(
+                task_type=TaskType.CAUSAL_LM, 
+                inference_mode=False,
+                r=self.args['lora_r'], 
+                lora_alpha=self.args['lora_alpha'], 
+                lora_dropout=self.args['lora_dropout'],
+                target_modules=['q_proj', 'k_proj', 'v_proj', 'o_proj', 'gate_proj', 'down_proj', 'up_proj']
+            )
         elif self.args['base_model_name'] == 'baichuan':
             print(f'[!] train with BAICHUAN-7B model')
             self.model = AutoModelForCausalLM.from_pretrained(
@@ -40,18 +49,17 @@ class SciLLM(nn.Module):
                 trust_remote_code=True
             )
 
+            peft_config = LoraConfig(
+                task_type=TaskType.CAUSAL_LM, 
+                inference_mode=False,
+                r=self.args['lora_r'], 
+                lora_alpha=self.args['lora_alpha'], 
+                lora_dropout=self.args['lora_dropout'],
+                target_modules=['o_proj', 'W_pack', 'gate_proj', 'down_proj', 'up_proj']
+            )
         # peft preparation
         # self.model.gradient_checkpointing_enable()
         self.model = prepare_model_for_kbit_training(self.model)
-
-        peft_config = LoraConfig(
-            task_type=TaskType.CAUSAL_LM, 
-            inference_mode=False,
-            r=self.args['lora_r'], 
-            lora_alpha=self.args['lora_alpha'], 
-            lora_dropout=self.args['lora_dropout'],
-            target_modules=['o_proj', 'W_pack', 'gate_proj', 'down_proj', 'up_proj']
-        )
 
         self.model = get_peft_model(self.model, peft_config)
         self.model.print_trainable_parameters()
