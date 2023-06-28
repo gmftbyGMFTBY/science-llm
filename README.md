@@ -158,17 +158,56 @@ For model details about SciDPR model, please refer to this [README.md](./SciDPR/
 
 Due to the limited computation resources, we only collect 4B tokens from Redpajama arXiv corpus for the first version of scientific pre-training, and the downloading scripts could be found in [this scripts](./scillm/data/pretrain/download_from_hf.py).
 
-After downloading, put the downloaded file and unzip them under the [./data/](./data/) directory.
-
-> **** The directory should look like:
-
-    .
-    └── ./data/ 
-         ├── pretrain
-         └── sft
-             ├── qasper
-             ├── 000000306060.jpg
-             └── ...
+After downloading, put the downloaded file and unzip them under the [./data/](./data/) directory, and the directory should look like:
+```bash
+.
+├── pretrain
+│   ├── download_from_hf.py
+│   ├── test
+│   │   └── collect.py
+│   └── train
+│       ├── combine_chinese_corpus.sh
+│       └── split.sh
+└── sft
+    ├── alpaca
+    │   └── alpaca_data.json
+    ├── combine.py
+    ├── dolly
+    │   ├── download_from_hf.py
+    │   └── train.json
+    ├── emotional
+    │   └── train.json
+    ├── processed_qasper_test_set.json
+    ├── processed_scimrc_test_set.json
+    ├── qasper
+    │   ├── README-test.md
+    │   ├── README.md
+    │   ├── collect.py
+    │   ├── qasper-dev-v0.3.json
+    │   ├── qasper-test-and-evaluator-v0.3.tgz
+    │   ├── qasper-test-v0.3.json
+    │   ├── qasper-train-dev-v0.3.tgz
+    │   ├── qasper-train-v0.3.json
+    │   ├── qasper_dev_sft.json
+    │   ├── qasper_evaluator.py
+    │   ├── qasper_sft.json
+    │   ├── qasper_test_sft.json
+    │   ├── qasper_train_sft.json
+    │   ├── qasper_yes_no_test_sft.json
+    │   ├── qasper_yes_no_train_sft.json
+    │   └── scillm_test.json
+    ├── scimrc
+    │   ├── collect.py
+    │   ├── scimrc_dev_sft.json
+    │   ├── scimrc_test_sft.json
+    │   ├── scimrc_train_sft.json
+    │   ├── scimrc_yes_no_test_sft.json
+    │   ├── scimrc_yes_no_train_sft.json
+    │   ├── smrc_dev.jsonl
+    │   ├── smrc_test.jsonl
+    │   └── smrc_train.jsonl
+    └── train.json
+```
               
 After downloading these datasets and saving them at the proper path, please refer to [Dataset Prepareing Tutorial](./data/README.md) for preprocessing these for corpus for following training.
 
