@@ -256,7 +256,7 @@ If you found Mozi models useful in your research or applications, please kindly 
 
 ### Technical Report:
 
-You can refer to our technical report for more details, which is saved in [this path](./mozi_technical_report.pdf).
+You can refer to our technical report for more details, which is saved in [this path](./asset/mozi_technical_report.pdf).
 
 ****
 
