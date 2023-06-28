@@ -70,8 +70,8 @@ The Mozi model weights (pre-trained on scientific corpus) consists of the pre-tr
 
     | LoRA checkpoints | Huggingface Delta Weights Address |
     | ---------------- | --------------------------------- |
-    | Baichuan-7B delta weight | []() |
-    | LLaMA-7B delta weight | []() |
+    | Baichuan-7B delta weight | [mozi_baichuan_7b](https://huggingface.co/DataHammer/mozi_baichuan_7b) |
+    | LLaMA-7B delta weight | [mozi_llama_7b](https://huggingface.co/DataHammer/mozi_llama_7b) |
 
 3. We also release the delta LoRA model weights for scientific emotional dialogue, which can be found in [here](). The emotional dialogue delta weights are built on Baichuan-7B model. In the future, we will directly optimize this scientific emotional dialogue instruction tuning dataset with other instruction dataset, such as paper-ground question answering and scientific information retrieval.
 
@@ -153,8 +153,8 @@ For model details about SciDPR model, please refer to this [README.md](./SciDPR/
 |:-------------:|:-------------:|
 |Scientific Pre-training| [Redpajama Dataset](https://huggingface.co/datasets/togethercomputer/RedPajama-Data-1T)|
 |Paper-ground Dataset QASPER|[QASPER-v0.3 dataset](https://allenai.org/data/qasper)|
-|Paper-ground Dataset SciMRC|[SciMRC dataset]()|
-|Emotional Dataset|[scientific-emotional-dialog]()|
+|Paper-ground Dataset SciMRC|[SciMRC dataset](https://huggingface.co/datasets/DataHammer/scimrc)|
+|Emotional Dataset|[scientific-emotional-dialog](https://huggingface.co/datasets/DataHammer/emotional_dialog)|
 
 Due to the limited computation resources, we only collect 4B tokens from Redpajama arXiv corpus for the first version of scientific pre-training, and the downloading scripts could be found in [this scripts](./scillm/data/pretrain/download_from_hf.py).
 
