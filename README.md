@@ -3,7 +3,7 @@
 ![Code License](https://img.shields.io/badge/Code%20License-Apache_2.0-green.svg)
 ![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)
 
-![墨子](./墨子_avatar.png)
+![墨子](./asset/墨子_avatar.png)
 
 
 **Team of Beijing Institute of Technology:** [Tian Lan](https://github.com/gmftbyGMFTBY)<sup>\*</sup>, Tianyi Che*, [Zewen Chi](https://github.com/CZWin32768), and Xian-ling Mao
