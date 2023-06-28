@@ -6,7 +6,7 @@
 ![墨子](./asset/墨子_avatar.png)
 
 
-**Team of Beijing Institute of Technology:** [Tian Lan](https://github.com/gmftbyGMFTBY)<sup>\*</sup>, Tianyi Che*, [Zewen Chi](https://github.com/CZWin32768), and Xian-ling Mao
+**Team of Beijing Institute of Technology:** [Tian Lan](https://github.com/gmftbyGMFTBY)<sup>\*</sup>, Tianyi Che*, [Zewen Chi](https://github.com/CZWin32768), Xuhao Hu and Xian-ling Mao
 
 ****
 
